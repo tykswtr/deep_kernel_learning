@@ -41,13 +41,13 @@ parser.add_argument("--neg_class",type=int,default=3)
 args = parser.parse_args()
 
 # specify datasets, network architecture, and pos & neg class index
-# args.dataset = "curves"
+args.dataset = "curves"
 # args.dataset = "cifar10"
-args.dataset = "mnist"
+# args.dataset = "mnist"
 # args.nn_architecture = "Res"
-args.nn_architecture = "Conv"
-# args.nn_architecture = "FC"
-args.tb_number = 6
+# args.nn_architecture = "Conv"
+args.nn_architecture = "FC"
+args.tb_number = 0
 # N = 100
 
 print(args)

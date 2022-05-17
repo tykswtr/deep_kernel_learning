@@ -1,0 +1,14 @@
+# ignore ALL .log files
+*.log
+
+# ignore ALL files in ANY directory named temp
+temp/
+
+# ignore All docs
+chks/
+
+# ignore all data
+data/
+
+# ignore cache
+_pycache_/

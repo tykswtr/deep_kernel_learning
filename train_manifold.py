@@ -40,6 +40,9 @@ parser.add_argument("--batchsize",type=int,default=4)
 parser.add_argument("--weight_decay",type=float,default=0)
 parser.add_argument("--lr",type=float,default=0.001)
 parser.add_argument("--maxepoch",type=int,default=100)
+parser.add_argument("--a0",type=float,default=math.pi/16)
+parser.add_argument("--offset",type=float,default=0.25)
+parser.add_argument("--omega0",type=float,default=10)
 
 args = parser.parse_args()
 
@@ -47,12 +50,19 @@ args = parser.parse_args()
 args.dataset = "curves"
 # args.nn_architecture = "Conv"
 args.nn_architecture = "FC"
-args.tb_number = 0
+args.tb_number = 10
 args.momentum = 0
-args.maxepoch = 100
+args.maxepoch = 1000
 args.lr = 0.1
+
+args.a0 = math.pi/16
+args.offset = 0.25/100
+args.omega0 = 10
+
 img_channel = 1
+
 N = 100
+args.batchsize=N*2
 n_0 = 1000
 n = 300
 L = 5
@@ -118,7 +128,7 @@ def generate_data_sine_curves(n_0, N, a0 = math.pi/16, offset = 0.25, omega0 = 1
 
 N_p = N
 N_n = N
-x = generate_data_sine_curves(n_0, N)
+x = generate_data_sine_curves(n_0, N, a0=args.a0, offset=args.offset, omega0=args.omega0)
 y_p = torch.ones(N_p, 1)
 y_m = -torch.ones(N_n, 1)
 y = torch.cat((y_p, y_m))
@@ -136,10 +146,13 @@ for epoch in range(args.maxepoch):  # loop over the dataset multiple times
 
     running_loss = 0.0
     loss_count = 0
-    for i in np.arange(np.floor(N/2)):
+    # for i in np.arange(np.floor(N/2)):
+    for i in np.arange(1):
         # get the inputs; data is a list of [inputs, labels]
-        inputs = x[(4*i).astype(int):(4*i+4).astype(int), :]
-        labels = y[(4*i).astype(int):(4*i+4).astype(int)]
+        # inputs = x[(4*i).astype(int):(4*i+4).astype(int), :]
+        # labels = y[(4*i).astype(int):(4*i+4).astype(int)]
+        inputs = x
+        labels = y
         labels = labels.to(torch.float32)
         # as we are using dogs and cats, transform the target into +1 and -1.
         # labels = torch.unsqueeze(labels-4, 1)
