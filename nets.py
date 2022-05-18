@@ -1,4 +1,10 @@
 '''
+We include different network structures here to be used. A network should include input dimension n_0, \
+hidden dimension n and output dimension n_out. The default activation function would be ReLU activation
+'''
+
+# Used Resnet setup from
+'''
 https://github.com/kuangliu/pytorch-cifar/blob/master/models/resnet.py
 ResNet in PyTorch.
 For Pre-activation ResNet, see 'preact_resnet.py'.
@@ -14,81 +20,60 @@ import torch.nn.functional as F
 
 import torchvision.models as models
 
-#Define network
+# A Two Layer ReLU network with fixed second layer.
 class Two_Layer_Net(nn.Module):
 
-    def __init__(self, n_0, n, activation=F.relu, sign_func=torch.sign):
+    def __init__(self, n_0, n, n_out=1, activation=F.relu):
         super(Two_Layer_Net, self).__init__()
-        self.input_dim = n_0;
-        self.width = n;
+        self.input_dim = n_0
+        self.width = n
         self.fc_layer = nn.Linear(n_0, n, bias=False)
-        self.activation = activation;
-        self.sign_func = sign_func
-        self.out_layer = nn.Linear(n, 1, bias=False)
+        self.activation = activation
+        self.out_layer = nn.Linear(n, n_out, bias=False)
         self.out_layer.weight.requires_grad = False
+        self.init_weights()
 
     def forward(self, x):
-        feature_sign = [];
-        x = self.fc_layer(x);
-        x = self.activation(x);
-        feature_sign = self.sign_func(x);
-        x = self.out_layer(x);
+        x = self.fc_layer(x)
+        x = self.activation(x)
+        x = self.out_layer(x)
         return x
 
     def init_weights(self, scale=1):
-        torch.nn.init.normal_(self.fc_layer.weight, 0, scale*np.sqrt(2/self.fc_layer.weight.data.shape[0]))
+        torch.nn.init.normal_(self.fc_layer.weight, 0, scale*np.sqrt(2/self.n))
         rademacher_out = torch.randint(0, 2, self.out_layer.weight.data.shape) * 2 - 1;
         self.out_layer.weight.data = rademacher_out.float()
 
-# deep fully connected networks
+# Deep fully connected networks
 class FC(nn.Module):
 
-    def __init__(self, n_0, n, L, M=None, linear=False, activation=F.relu, sign_func=torch.sign):
+    def __init__(self, n_0, n, L, n_out=1, activation=F.relu):
         super(FC, self).__init__()
-        self.input_dim = n_0;
-        self.width = n;
-        self.L = L;
-        self.M = M;
-        self.fc_layer = nn.ModuleList();
+        self.input_dim = n_0
+        self.width = n
+        self.L = L
+        self.M = M
+        self.fc_layer = nn.ModuleList()
         self.fc_layer.append(nn.Linear(n_0, n, bias=False))
-        self.alphas = [];
-        self.linear = linear;
-        self.activation = activation;
-        self.sign_func = sign_func;
+        self.activation = activation
         for l in range(L-1):
           self.fc_layer.append(nn.Linear(n, n, bias=False))
-          # self.alphas.append(nn.zeros)
-        self.fc_layer.append(nn.Linear(n, 1, bias=False))
-        # if M is None:
-        #   self.M = [None]* L;
-        #   for l in range(L):
-        #     self.M[l] = torch.ones(n);
-        # self.beta = ;
+        self.fc_layer.append(nn.Linear(n, n_out, bias=False))
+        self.apply(self.init_weights)
 
     def forward(self, x):
         x = torch.flatten(x, 1)
         for l in range(self.L):
             x = self.activation(self.fc_layer[l](x))
-        # feature_sign = [];
-        # for l in range(self.L):
-        #   if self.linear:
-        #     x = self.fc_layer[l](x);
-        #     if self.M is not None:
-        #       x = x*self.M[l];
-        #   else:
-        #     x = self.activation(self.fc_layer[l](x))
-        #     if self.M is not None:
-        #       x = x*self.M[l];
-          # x = huberReLU(self.fc_layer[l](x));
-          # feature_sign.append(self.sign_func(x));
         x = self.fc_layer[self.L](x)
         return x
 
-    # def init_weights(self, m):
-    #   if isinstance(m, nn.Linear):
-    #         torch.nn.init.normal_(m.weight.data, 0, np.sqrt(2/m.weight.data.shape[0]))
+    def init_weights(self, m):
+      if isinstance(m, nn.Linear):
+            torch.nn.init.normal_(m.weight.data, 0, np.sqrt(2/m.weight.data.shape[0]))
 
 
+# Convolutional network for Cifar10
 class Conv_Net(nn.Module):
     def __init__(self, in_channel=3):
         super().__init__()
@@ -111,6 +96,7 @@ class Conv_Net(nn.Module):
         x = self.fc4(x)
         return x
 
+# Convolutional Network for MNIST
 class Conv_Net_Mnist(nn.Module):
     def __init__(self):
         super().__init__()
@@ -136,6 +122,7 @@ class Conv_Net_Mnist(nn.Module):
         # x = self.fc4(x)
         return x
 
+# Resnet18 for Cifar10
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -251,6 +238,7 @@ def ResNet152():
     return ResNet(Bottleneck, [3, 8, 36, 3])
 
 
+# VGG for Cifar10
 '''VGG11/13/16/19 in Pytorch.'''
 cfg = {
     'VGG11': [64, 'M', 128, 'M', 256, 256, 'M', 512, 512, 'M', 512, 512, 'M'],
